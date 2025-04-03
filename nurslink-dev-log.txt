@@ -12,3 +12,4 @@
  ○ Compiling /_not-found/page ...
  ✓ Compiled /_not-found/page in 3.5s
  GET / 404 in 4207ms
+[?25h
