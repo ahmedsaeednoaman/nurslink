@@ -1,0 +1,52 @@
+model Order {
+  id        String     @id @default(uuid())
+  fullName  String
+  phone     String
+  address   String
+  notes     String?
+  status    String     @default("PENDING")
+  total     Float
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id       String  @id @default(uuid())
+  orderId  String
+  order    Order   @relation(fields: [orderId], references: [id])
+  productId String
+  name     String
+  price    Float
+  quantity Int
+}
+
+model Product {
+  id       String     @id @default(uuid())
+  name     String
+  price    Float
+  image    String
+  stock    Int        @default(0)
+  orders   OrderItem[]
+}
+model Coupon {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  type        CouponType
+  value       Decimal
+  description String?
+  isActive    Boolean  @default(true)
+  expiryDate  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+
+  @@map("coupons")
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
