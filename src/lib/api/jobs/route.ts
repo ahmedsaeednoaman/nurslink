@@ -1,59 +1,79 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import type { Job } from '@prisma/client'; // ❗ نكتب type فقط علشان نستورد النوع بدون مشاكل
+// لو عندك نظام مستخدمين، تفعل الاستيراد ده
+// import { getCurrentUser } from '@/lib/auth'; 
 
-// GET /api/jobs
+// تعريف نوع المنتج مع التقييمات
+interface ProductWithReviews {
+  id: string;
+  name: string;
+  price: number;
+  images: string[];
+  category: string;
+  createdAt: Date;
+  reviews: { rating: number }[];
+}
+
+// جلب المنتجات (GET)
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  const where: Partial<Job> = {
-    status: 'OPEN',
+  const where: any = {
+    ...(searchParams.get('category') && { category: searchParams.get('category') }),
+    ...(searchParams.get('minPrice') && { price: { gte: parseFloat(searchParams.get('minPrice')!) } }),
+    ...(searchParams.get('maxPrice') && { price: { ...(where?.price || {}), lte: parseFloat(searchParams.get('maxPrice')!) } }),
+    ...(searchParams.get('search') && { 
+      name: { 
+        contains: searchParams.get('search')!, 
+        mode: 'insensitive' 
+      } 
+    }),
   };
 
-  if (searchParams.get('type')) {
-    where.type = searchParams.get('type') as Job['type'];
-  }
-
-  if (searchParams.get('specialty')) {
-    where.specialty = searchParams.get('specialty') || undefined;
-  }
-
-  if (searchParams.get('location')) {
-    where.location = { contains: searchParams.get('location')! };
-  }
-
-  const jobs = await prisma.job.findMany({
+  const products: ProductWithReviews[] = await prisma.product.findMany({
     where,
-    orderBy: { createdAt: 'desc' },
+    include: {
+      reviews: {
+        select: { rating: true }
+      }
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
   });
 
-  return NextResponse.json(jobs);
+  // حساب متوسط التقييم
+  const productsWithRating = products.map((product) => ({
+    ...product,
+    rating: product.reviews.length > 0
+      ? product.reviews.reduce((sum: number, review: { rating: number }) => sum + review.rating, 0) / product.reviews.length
+      : null
+  }));
+
+  return NextResponse.json(productsWithRating);
 }
 
-// POST /api/jobs
+// إنشاء منتج جديد (POST)
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
+  // ✅ حماية إضافية لو عندك نظام مستخدمين
+  // const user = await getCurrentUser();
+  // if (!user || user.role !== 'admin') {
+  //   return new NextResponse('Unauthorized', { status: 401 });
+  // }
 
-    const job = await prisma.job.create({
-      data: {
-        title: body.title,
-        description: body.description,
-        salary: body.salary,
-        location: body.location,
-        type: body.type,
-        specialty: body.specialty,
-        employerId: body.employerId,
-        status: 'OPEN', // ✅
-      },
-    });
+  const body = await request.json();
 
-    return NextResponse.json(job, { status: 201 });
-  } catch (_error) { 
-    // ✅ استخدم _error عشان تتفادى تحذير "error is defined but never used"
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
-  }
+  const product = await prisma.product.create({
+    data: {
+      name: body.name,
+      description: body.description || '',
+      longDescription: body.longDescription || '',
+      price: body.price,
+      images: body.images,
+      category: body.category,
+      stock: body.stock
+    }
+  });
+
+  return NextResponse.json(product);
 }

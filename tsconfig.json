@@ -13,9 +13,9 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "baseUrl": "./src",                 // ✅ دي مهمة جداً عشان يقرأ المسار صح
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["src/*"]               // ✅ هنا ربطنا @ على src
+      "@/*": ["*"]
     },
     "plugins": [
       {
@@ -28,7 +28,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-, "src/components/shared/Navbar.tsx"  ],
+  ],
   "exclude": [
     "node_modules"
   ]

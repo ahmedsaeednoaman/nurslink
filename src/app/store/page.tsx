@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-
+import { ShoppingCart } from "lucide-react"; // ✅ استيراد الايكونه الصح
 
 // ✅ تحميل المكونات ديناميكياً مع مؤشر تحميل (Skeleton)
 const ProductGrid = dynamic(() => import('@/components/store/ProductGrid'), {
@@ -31,7 +31,7 @@ export default function StorePage() {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
-        {/* ✅ الشريط الجانبي للفئات (Category Sidebar) */}
+        {/* ✅ الشريط الجانبي للفئات */}
         <aside className={`md:w-1/4 ${isCartOpen ? 'hidden md:block' : 'block'}`}>
           <CategorySidebar 
             selectedCategory={selectedCategory}
@@ -51,16 +51,16 @@ export default function StorePage() {
               className="gap-2"
               aria-label="عرض سلة التسوق"
             >
-              <Icons.cart className="h-4 w-4" />
+              <ShoppingCart className="h-4 w-4" />
               عرض السلة
             </Button>
           </header>
 
-          {/* ✅ شبكة عرض المنتجات (Product Grid) */}
+          {/* ✅ شبكة عرض المنتجات */}
           <ProductGrid category={selectedCategory} />
         </section>
 
-        {/* ✅ الشريط الجانبي للسلة (Cart Sidebar) */}
+        {/* ✅ الشريط الجانبي للسلة */}
         <CartSidebar 
           isOpen={isCartOpen} 
           onClose={toggleCart} 
