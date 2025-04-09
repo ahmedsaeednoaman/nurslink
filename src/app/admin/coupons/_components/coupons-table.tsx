@@ -6,19 +6,35 @@ import Link from 'next/link'
 import { ExportButton } from './export-button'
 import { toast } from 'sonner'
 
+// تعريف الأنواع بشكل صحيح
+interface Coupon {
+  id: string;
+  code: string;
+  discountType: 'percentage' | 'fixed'; // حسب اللي موجود عندك
+  discountValue: number;
+  expiryDate?: string | null;
+}
+
+interface Pagination {
+  page: number;
+  totalPages: number;
+}
+
+interface CouponsTableProps {
+  coupons: Coupon[];
+  loading: boolean;
+  pagination: Pagination;
+  onPageChange: (page: number) => void;
+  refreshCoupons: () => void;
+}
+
 export default function CouponsTable({
   coupons,
   loading,
   pagination,
   onPageChange,
-  refreshCoupons
-}: {
-  coupons: any[]
-  loading: boolean
-  pagination: any
-  onPageChange: (page: number) => void
-  refreshCoupons: () => void
-}) {
+  refreshCoupons,
+}: CouponsTableProps) {
   async function handleDelete(id: string) {
     const toastId = toast.loading('جاري الحذف...');
     try {
@@ -61,13 +77,19 @@ export default function CouponsTable({
             {coupons.map((coupon) => (
               <tr key={coupon.id}>
                 <td className="px-4 py-2">{coupon.code}</td>
-                <td className="px-4 py-2">{coupon.discountType === 'percentage' ? 'نسبة' : 'قيمة ثابتة'}</td>
+                <td className="px-4 py-2">
+                  {coupon.discountType === 'percentage' ? 'نسبة' : 'قيمة ثابتة'}
+                </td>
                 <td className="px-4 py-2">
                   {coupon.discountValue}
                   {coupon.discountType === 'percentage' ? '%' : ' ر.س'}
                 </td>
-                <td className="px-4 py-2">{coupon.expiryDate ? new Date(coupon.expiryDate).toLocaleDateString('ar-EG') : 'بدون تاريخ'}</td>
-                <td className="px-4 py-2 space-x-2">
+                <td className="px-4 py-2">
+                  {coupon.expiryDate
+                    ? new Date(coupon.expiryDate).toLocaleDateString('ar-EG')
+                    : 'بدون تاريخ'}
+                </td>
+                <td className="px-4 py-2 flex gap-2">
                   <Link href={`/admin/coupons/${coupon.id}/edit`}>
                     <Button variant="outline" size="icon" className="text-blue-600">
                       <Edit className="h-4 w-4" />
@@ -133,5 +155,5 @@ export default function CouponsTable({
         </div>
       </div>
     </div>
-  )
+  );
 }

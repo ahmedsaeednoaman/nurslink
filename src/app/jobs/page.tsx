@@ -1,14 +1,32 @@
 import JobCard from '@/components/jobs/JobCard';
 import JobFilters from '@/components/jobs/JobFilters';
 
-async function getJobs(filters?: any) {
-  const queryString = new URLSearchParams(filters).toString();
-  const res = await fetch(`/api/jobs?${queryString}`);
-  if (!res.ok) throw new Error('فشل في جلب الوظائف');
-  return res.json();
+// تعريف النوع لبيانات الوظيفة
+interface Job {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  location: string;
+  salary?: number;
+  // زود أي خصائص موجودة عندك في الداتا
 }
 
-export default async function JobsPage({ searchParams }: { searchParams: any }) {
+// نوع فلترة الوظائف
+interface JobFiltersType {
+  category?: string;
+  location?: string;
+  search?: string;
+}
+
+async function getJobs(filters?: JobFiltersType) {
+  const queryString = filters ? new URLSearchParams(filters as Record<string, string>).toString() : '';
+  const res = await fetch(`/api/jobs?${queryString}`);
+  if (!res.ok) throw new Error('فشل في جلب الوظائف');
+  return res.json() as Promise<Job[]>;
+}
+
+export default async function JobsPage({ searchParams }: { searchParams: JobFiltersType }) {
   const jobs = await getJobs(searchParams);
 
   return (
@@ -16,7 +34,7 @@ export default async function JobsPage({ searchParams }: { searchParams: any }) 
       <h1 className="text-2xl font-bold mb-6">الوظائف المتاحة</h1>
       <JobFilters />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {jobs.map((job: any) => (
+        {jobs.map((job) => (
           <JobCard key={job.id} job={job} />
         ))}
       </div>

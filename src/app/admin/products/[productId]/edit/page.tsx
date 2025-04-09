@@ -3,31 +3,53 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
 import { toast } from '@/components/ui/use-toast';
 import { categories } from '@/lib/constants';
+import type { Product } from '@/types/product';
 
-// سكيم الفاليديشن
 const productFormSchema = z.object({
-  name: z.string().min(2, 'يجب أن يحتوي الاسم على الأقل على حرفين'),
-  description: z.string().min(10, 'الوصف يجب أن يحتوي على الأقل على 10 أحرف'),
-  price: z.number().min(0, 'السعر يجب أن يكون رقم موجب'),
-  category: z.string().min(1, 'يجب اختيار فئة'),
-  stock: z.number().min(0, 'المخزون يجب أن يكون رقم موجب'),
-  images: z.array(z.string().url()).optional(),
+  name: z.string().min(2, { message: 'الاسم يجب أن يحتوي على الأقل على حرفين' }),
+  description: z.string().min(10, { message: 'الوصف يجب أن يحتوي على الأقل على 10 أحرف' }),
+  price: z.coerce.number({
+    required_error: 'السعر مطلوب',
+    invalid_type_error: 'يجب إدخال رقم صحيح'
+  }).min(0, { message: 'السعر لا يمكن أن يكون أقل من صفر' }),
+  category: z.string().min(1, { message: 'يجب اختيار فئة من القائمة' }),
+  stock: z.coerce.number({
+    required_error: 'الكمية مطلوبة',
+    invalid_type_error: 'يجب إدخال رقم صحيح'
+  }).min(0, { message: 'الكمية لا يمكن أن تكون سالبة' }),
+  images: z.array(z.string().url({ message: 'رابط الصورة غير صحيح' })).optional(),
 });
 
-export default function EditProductPage({ params }: { params: { productId: string } }) {
+type ProductFormValues = z.infer<typeof productFormSchema>;
+
+interface EditProductPageProps {
+  params: {
+    productId: string;
+  };
+}
+
+export default function EditProductPage({ params }: EditProductPageProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
-  const form = useForm<z.infer<typeof productFormSchema>>({
+  const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
+    mode: 'onChange',
     defaultValues: {
       name: '',
       description: '',
@@ -38,14 +60,13 @@ export default function EditProductPage({ params }: { params: { productId: strin
     },
   });
 
-  // جلب بيانات المنتج الحالي
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const res = await fetch(`/api/products/${params.productId}`);
-        if (!res.ok) throw new Error('فشل في تحميل المنتج');
+        if (!res.ok) throw new Error('فشل في تحميل بيانات المنتج');
 
-        const data = await res.json();
+        const data: Product = await res.json();
         form.reset({
           name: data.name,
           description: data.description,
@@ -60,45 +81,51 @@ export default function EditProductPage({ params }: { params: { productId: strin
           description: error instanceof Error ? error.message : 'حدث خطأ غير متوقع',
           variant: 'destructive',
         });
+        router.push('/admin/products');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchProduct();
-  }, [params.productId, form]);
+  }, [params.productId, form, router]);
 
-  async function onSubmit(values: z.infer<typeof productFormSchema>) {
+  const onSubmit: SubmitHandler<ProductFormValues> = async (values) => {
     try {
       const response = await fetch(`/api/products/${params.productId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(values),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('فشل في تحديث المنتج');
+        throw new Error(data.message || 'فشل في تحديث المنتج');
       }
 
       toast({
-        title: 'تم التحديث بنجاح',
-        description: 'تم تحديث بيانات المنتج',
+        title: 'تم التحديث بنجاح ✅',
+        description: 'تم تحديث بيانات المنتج بنجاح',
       });
 
+      router.refresh();
       router.push('/admin/products');
     } catch (error) {
       toast({
-        title: 'حدث خطأ',
+        title: 'خطأ في التحديث ❌',
         description: error instanceof Error ? error.message : 'حدث خطأ غير متوقع',
         variant: 'destructive',
       });
     }
-  }
+  };
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 text-center">
-        <p>جارٍ تحميل بيانات المنتج...</p>
+      <div className="container mx-auto p-4 text-center animate-pulse">
+        <p className="text-gray-600">جارٍ تحميل بيانات المنتج...</p>
       </div>
     );
   }
@@ -106,8 +133,12 @@ export default function EditProductPage({ params }: { params: { productId: strin
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">تعديل المنتج</h1>
-        <Button variant="outline" onClick={() => router.back()}>
+        <h1 className="text-2xl font-bold text-primary">تعديل المنتج</h1>
+        <Button 
+          variant="outline" 
+          onClick={() => router.back()}
+          aria-label="العودة للخلف"
+        >
           رجوع
         </Button>
       </div>
@@ -122,7 +153,11 @@ export default function EditProductPage({ params }: { params: { productId: strin
                 <FormItem>
                   <FormLabel>اسم المنتج</FormLabel>
                   <FormControl>
-                    <Input placeholder="أدخل اسم المنتج" {...field} />
+                    <Input 
+                      placeholder="أدخل اسم المنتج" 
+                      {...field}
+                      aria-label="اسم المنتج"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -139,8 +174,9 @@ export default function EditProductPage({ params }: { params: { productId: strin
                     <select
                       {...field}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      aria-label="قائمة اختيار الفئة"
                     >
-                      <option value="">اختر فئة</option>
+                      <option value="" disabled>اختر فئة</option>
                       {categories.map((category) => (
                         <option key={category.value} value={category.value}>
                           {category.label}
@@ -163,8 +199,9 @@ export default function EditProductPage({ params }: { params: { productId: strin
                     <Input
                       type="number"
                       placeholder="أدخل السعر"
+                      min="0"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      aria-label="السعر"
                     />
                   </FormControl>
                   <FormMessage />
@@ -182,8 +219,9 @@ export default function EditProductPage({ params }: { params: { productId: strin
                     <Input
                       type="number"
                       placeholder="أدخل الكمية"
+                      min="0"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      aria-label="الكمية المتاحة"
                     />
                   </FormControl>
                   <FormMessage />
@@ -200,9 +238,10 @@ export default function EditProductPage({ params }: { params: { productId: strin
                     <FormLabel>الوصف</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="أدخل وصف المنتج"
+                        placeholder="أدخل وصف المنتج..."
                         rows={5}
                         {...field}
+                        aria-label="الوصف"
                       />
                     </FormControl>
                     <FormMessage />
@@ -213,15 +252,20 @@ export default function EditProductPage({ params }: { params: { productId: strin
           </div>
 
           <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
+            <Button 
+              type="button" 
+              variant="outline" 
               onClick={() => router.push('/admin/products')}
+              aria-label="رجوع"
             >
               إلغاء
             </Button>
-            <Button type="submit">
-              تحديث المنتج
+            <Button 
+              type="submit" 
+              disabled={!form.formState.isDirty}
+              aria-label="تحديث المنتج"
+            >
+              {form.formState.isSubmitting ? 'جاري الحفظ...' : 'تحديث المنتج'}
             </Button>
           </div>
         </form>

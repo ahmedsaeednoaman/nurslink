@@ -1,6 +1,14 @@
 import Image from 'next/image';
 
-export default function ProductCard({ product }: { product: any }) {
+// تعريف نوع المنتج
+interface Product {
+  id: string;
+  name: string;
+  images: string[];
+  price: number;
+}
+
+export default function ProductCard({ product }: { product: Product }) {
   return (
     <div className="border rounded-lg overflow-hidden">
       <div className="aspect-square relative">
@@ -15,7 +23,9 @@ export default function ProductCard({ product }: { product: any }) {
       </div>
       <div className="p-4">
         <h3 className="font-bold">{product.name}</h3>
-        <p className="text-primary mt-2">{product.price} ج.م</p>
+        <p className="text-primary mt-2">
+          {product.price.toLocaleString()} ج.م
+        </p>
       </div>
     </div>
   );

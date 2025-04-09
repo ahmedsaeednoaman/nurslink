@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Menu, X, User, ShoppingCart, Bell } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { Button } from '@/components/shared/ui/button';
+import { Button } from "@/components/ui/Button";
 import Image from 'next/image';
 
 const links = [
@@ -24,7 +24,7 @@ export default function Navbar() {
     <header className="w-full fixed top-0 z-50 bg-white/80 backdrop-blur-md border-b">
       <nav className="container mx-auto flex items-center justify-between py-3 px-4 sm:px-6">
         
-        {/* Logo - النسخة المحسنة */}
+        {/* Logo Section */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -32,13 +32,12 @@ export default function Navbar() {
           className="flex items-center gap-2"
         >
           <Link href="/" className="flex items-center gap-2 group">
-            {/* الجزء الأول من الشعار مع تأثيرات */}
             <motion.div
               whileHover={{ rotate: 10 }}
               className="bg-primary text-white p-2 rounded-lg transition-all duration-300 group-hover:bg-primary/90"
             >
               <Image
-                src="/logo-icon.png" // أيقونة الشعار
+                src="/logo-icon.png"
                 alt="NursLink Logo"
                 width={32}
                 height={32}
@@ -47,25 +46,24 @@ export default function Navbar() {
               />
             </motion.div>
             
-            {/* الجزء النصي من الشعار */}
             <motion.div className="hidden sm:flex flex-col">
-              <span className="text-xl font-bold text-primary group-hover:text-primary/80 transition-colors">
+              <span className="text-xl font-bold text-primary group-hover:text-primary/80">
                 Nurs
               </span>
-              <span className="text-xs font-medium text-gray-600 group-hover:text-gray-800 transition-colors">
+              <span className="text-xs font-medium text-gray-600 group-hover:text-gray-800">
                 Link
               </span>
             </motion.div>
           </Link>
         </motion.div>
 
-        {/* بقية مكونات الـ Navbar... */}
+        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-6">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`relative px-2 py-1 font-medium transition-colors ${
+              className={`relative px-2 py-1 font-medium ${
                 pathname === link.href ? 'text-primary' : 'text-gray-600 hover:text-primary'
               }`}
             >
@@ -81,7 +79,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* User Actions - Desktop */}
+        {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
           <Button variant="ghost" size="icon" className="text-gray-600 hover:text-primary">
             <Bell className="h-5 w-5" />
@@ -97,13 +95,11 @@ export default function Navbar() {
           </Button>
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden text-gray-600 p-2 rounded-md hover:bg-gray-100 transition-colors"
+          className="md:hidden text-gray-600 p-2 rounded-md hover:bg-gray-100"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="قائمة التنقل"
-          aria-expanded={menuOpen}
-          aria-controls="mobile-menu"
         >
           {menuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -112,12 +108,10 @@ export default function Navbar() {
         <AnimatePresence>
           {menuOpen && (
             <motion.div
-              id="mobile-menu"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="md:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t overflow-hidden"
+              className="md:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t"
             >
               <div className="flex flex-col px-4 py-3 space-y-3">
                 {links.map((link) => (
@@ -126,8 +120,8 @@ export default function Navbar() {
                     href={link.href}
                     onClick={() => setMenuOpen(false)}
                     className={`px-3 py-2 rounded-md font-medium ${
-                      pathname === link.href
-                        ? 'bg-primary/10 text-primary'
+                      pathname === link.href 
+                        ? 'bg-primary/10 text-primary' 
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
@@ -135,13 +129,13 @@ export default function Navbar() {
                   </Link>
                 ))}
 
-                {/* User Actions - Mobile */}
+                {/* Mobile Actions */}
                 <div className="flex flex-col gap-2 pt-4 border-t mt-4">
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
                     <User className="h-4 w-4" />
                     تسجيل الدخول
                   </Button>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
                     <ShoppingCart className="h-4 w-4" />
                     العربة
                   </Button>
